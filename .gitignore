@@ -1,0 +1,5 @@
+*.pt
+__pycache__/*
+tmp/*
+flagged/*
+test.*
