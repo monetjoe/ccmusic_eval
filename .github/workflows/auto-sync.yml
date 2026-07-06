@@ -81,10 +81,10 @@ jobs:
           LATEST_VER=$(curl -s "$MD_URL" | tr -d '\n' | grep -oP '(?<=<code>).*?(?=</code>)')
           if [ -n "$LATEST_VER" ]; then
             sed -i "s/^\(sdk_version: \)[0-9.]*/\1$LATEST_VER/" README.md
+            git config --global user.name "$GIT_NAME"
+            git config --global user.email "$GIT_EMAIL"
             if [ -n "$(git status --porcelain)" ]; then
               echo "Files are different, committing changes..."
-              git config --global user.name "$GIT_NAME"
-              git config --global user.email "$GIT_EMAIL"
               git add .
               git commit -m "Update SDK at $(date '+%Y-%m-%d %H:%M:%S')"
               git push
