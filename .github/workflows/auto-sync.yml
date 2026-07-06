@@ -21,12 +21,15 @@ jobs:
       # Step 1: 检出当前仓库代码
       - name: Checkout repository
         uses: actions/checkout@v5
-      # Step 2: 同步至 HuggingFace
+      # Step 2: 配置 Git
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ secrets.GIT_NAME }}"
+          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+      # Step 3: 同步至 HuggingFace
       - name: Sync Files to HuggingFace
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          GIT_NAME: ${{ secrets.GIT_NAME }}
-          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
         run: |
           mv -f ./.github/restart.py ../
           git clone https://oauth2:$HF_TOKEN@huggingface.co/spaces/ccmusic-database/bel_canto ../hf_repo
@@ -34,28 +37,22 @@ jobs:
           cp -rf ../hf_repo/README.md ../hf_repo/requirements.txt ../hf_repo/.git ./
           if [ -n "$(git status --porcelain)" ]; then
             echo "Files are different, committing changes..."
-            git config --global user.name "$GIT_NAME"
-            git config --global user.email "$GIT_EMAIL"
             git add .
             git commit -m "Auto sync at $(date '+%Y-%m-%d %H:%M:%S')"
             git push
           else
             echo "Files are the same, no changes."
           fi
-      # Step 3: 同步至 ModelScope
+      # Step 4: 同步至 ModelScope
       - name: Sync Files to ModelScope
         env:
           MS_TOKEN: ${{ secrets.MS_TOKEN }}
-          GIT_NAME: ${{ secrets.GIT_NAME }}
-          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
         run: |
           git clone https://oauth2:$MS_TOKEN@www.modelscope.cn/studios/ccmusic-database/bel_canto.git ../ms_repo
           rm -rf ./.git ./README.md
           cp -rf ../ms_repo/requirements.txt ../ms_repo/.git ./
           if [ -n "$(git status --porcelain)" ]; then
             echo "Files are different, committing changes..."
-            git config --global user.name "$GIT_NAME"
-            git config --global user.email "$GIT_EMAIL"
             git add .
             git commit -m "Auto sync at $(date '+%Y-%m-%d %H:%M:%S')"
             git push
@@ -69,11 +66,15 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
+      # Step 1: 配置 Git
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ secrets.GIT_NAME }}"
+          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+      # Step 2: 更新 HF SDK
       - name: Check HuggingFace SDK Update
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          GIT_NAME: ${{ secrets.GIT_NAME }}
-          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
           MD_URL: ${{ vars.MD_URL }}
         run: |
           GIT_LFS_SKIP_SMUDGE=1 git clone https://oauth2:$HF_TOKEN@huggingface.co/spaces/ccmusic-database/bel_canto ./hf_repo
@@ -81,8 +82,6 @@ jobs:
           LATEST_VER=$(curl -s "$MD_URL" | tr -d '\n' | grep -oP '(?<=<code>).*?(?=</code>)')
           if [ -n "$LATEST_VER" ]; then
             sed -i "s/^\(sdk_version: \)[0-9.]*/\1$LATEST_VER/" README.md
-            git config --global user.name "$GIT_NAME"
-            git config --global user.email "$GIT_EMAIL"
             if [ -n "$(git status --porcelain)" ]; then
               echo "Files are different, committing changes..."
               git add .
