@@ -59,7 +59,7 @@ jobs:
             git push
             wget --header="Authorization: token $GIT_TOKEN" $BASE_URL/restart.py
             pip install modelscope
-            python ./restart.py --token $MS_TOKEN
+            python ./restart.py --token $MS_TOKEN --repo ccmusic-database/bel_canto
           else
             echo "Files are the same, no changes."
           fi
