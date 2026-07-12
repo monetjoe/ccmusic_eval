@@ -68,6 +68,9 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
+      # Step 0: 检出当前仓库代码
+      - name: Checkout repository
+        uses: actions/checkout@v5
       # Step 1: 配置 Git
       - name: Configure Git
         run: |
@@ -79,23 +82,16 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
           BASE_URL: ${{ secrets.BASE_URL }}
-          HF_BASE: ${{ secrets.HF_BASE }}
         run: |
-          LATEST_VER=$(curl -s "$HF_BASE/spaces/ccmusic-database/bel_canto/blob/main/README.md" | tr -d '\n' | grep -oP '(?<=<code>).*?(?=</code>)')
-          if [ -n "$LATEST_VER" ]; then
-            wget $HF_BASE/ccmusic-database/bel_canto/raw/main/README.md
-            sed -i "s/^\(sdk_version: \)[0-9.]*/\1$LATEST_VER/" README.md
-            wget --header="Authorization: token $GIT_TOKEN" $BASE_URL/upload.py
-            pip install huggingface_hub
-            python ./upload.py --token $HF_TOKEN --repo ccmusic-database/bel_canto
+          wget --header="Authorization: token $GIT_TOKEN" -P ../ $BASE_URL/update.py
+          pip install huggingface_hub
+          python ../update.py --token $HF_TOKEN --repo ccmusic-database/bel_canto
+          last_commit_ts=$(git log -1 --format=%ct 2>/dev/null)
+          now_ts=$(date +%s)
+          diff_days=$(((now_ts - last_commit_ts) / 86400))
+          if [ $diff_days -gt 58 ]; then
+            git commit --allow-empty -m "chore: keep repo active [skip ci]"
+            git push origin HEAD:main
           else
-            last_commit_ts=$(git log -1 --format=%ct 2>/dev/null)
-            now_ts=$(date +%s)
-            diff_days=$(((now_ts - last_commit_ts) / 86400))
-            if [ $diff_days -gt 58 ]; then
-              git commit --allow-empty -m "chore: keep repo active [skip ci]"
-              git push origin HEAD:main
-            else
-              echo "Files are the same, no changes."
-            fi
+            echo "Files are the same, no changes."
           fi
