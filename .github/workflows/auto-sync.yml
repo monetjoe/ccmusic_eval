@@ -81,7 +81,7 @@ jobs:
           BASE_URL: ${{ secrets.BASE_URL }}
           REPO: ccmusic-database/bel_canto
         run: |
-          MD_URL="https://huggingface.co/spaces/$REPO"
+          MD_URL=$(echo "https://huggingface.co/spaces/$REPO")
           LATEST_VER=$(curl -s "$MD_URL/blob/main/README.md" | tr -d '\n' | grep -oP '(?<=<code>).*?(?=</code>)')
           if [ -n "$LATEST_VER" ]; then
             wget "$MD_URL/raw/main/README.md"
