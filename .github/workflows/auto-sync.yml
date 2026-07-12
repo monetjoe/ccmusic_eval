@@ -31,7 +31,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://oauth2:$HF_TOKEN@huggingface.co/spaces/ccmusic-database/bel_canto ../hf_repo
+          git clone https://oauth2:$HF_TOKEN@huggingface.co/spaces/ccmusic-database/bel_canto ../hf_repo
           rm -rf ./.git* ./LICENSE
           cp -rf ../hf_repo/README.md ../hf_repo/requirements.txt ../hf_repo/.git ./
           if [ -n "$(git status --porcelain)" ]; then
