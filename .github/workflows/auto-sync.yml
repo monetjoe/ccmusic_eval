@@ -6,7 +6,7 @@ on:
       - main
 
   schedule:
-    - cron: "0 19 * * *" # 每天 UTC 时间 19:00 (北京时间 3:00~4:15) 触发一次
+    - cron: "0 18 * * *" # 每天 UTC 时间 19:00 (北京时间 3:00~4:15) 触发一次
 
   workflow_dispatch: # 允许手动触发
 
@@ -31,7 +31,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git clone https://oauth2:$HF_TOKEN@huggingface.co/spaces/ccmusic-database/bel_canto ../hf_repo
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://oauth2:$HF_TOKEN@huggingface.co/spaces/ccmusic-database/bel_canto ../hf_repo
           rm -rf ./.git* ./LICENSE
           cp -rf ../hf_repo/README.md ../hf_repo/requirements.txt ../hf_repo/.git ./
           if [ -n "$(git status --porcelain)" ]; then
