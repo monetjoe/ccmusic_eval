@@ -79,16 +79,14 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
           BASE_URL: ${{ secrets.BASE_URL }}
-          REPO: ccmusic-database/bel_canto
         run: |
-          MD_URL=$(echo "https://huggingface.co/spaces/$REPO")
-          LATEST_VER=$(curl -s "$MD_URL/blob/main/README.md" | tr -d '\n' | grep -oP '(?<=<code>).*?(?=</code>)')
+          LATEST_VER=$(curl -s "https://huggingface.co/spaces/ccmusic-database/bel_canto/blob/main/README.md" | tr -d '\n' | grep -oP '(?<=<code>).*?(?=</code>)')
           if [ -n "$LATEST_VER" ]; then
-            wget "$MD_URL/raw/main/README.md"
+            wget https://huggingface.co/spaces/ccmusic-database/bel_canto/raw/main/README.md
             sed -i "s/^\(sdk_version: \)[0-9.]*/\1$LATEST_VER/" README.md
             wget --header="Authorization: token $GIT_TOKEN" $BASE_URL/upload.py
             pip install huggingface_hub
-            python ./upload.py --token $HF_TOKEN --repo $REPO
+            python ./upload.py --token $HF_TOKEN --repo ccmusic-database/bel_canto
           else
             last_commit_ts=$(git log -1 --format=%ct 2>/dev/null)
             now_ts=$(date +%s)
