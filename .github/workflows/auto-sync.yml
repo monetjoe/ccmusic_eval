@@ -77,31 +77,25 @@ jobs:
       - name: Check HuggingFace SDK Update
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          MD_URL: ${{ vars.MD_URL }}
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+          BASE_URL: ${{ secrets.BASE_URL }}
         run: |
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://oauth2:$HF_TOKEN@huggingface.co/spaces/ccmusic-database/bel_canto ./hf_repo
-          cd ./hf_repo
+          MD_URL="https://huggingface.co/spaces/ccmusic-database/bel_canto/blob/main/README.md"
           LATEST_VER=$(curl -s "$MD_URL" | tr -d '\n' | grep -oP '(?<=<code>).*?(?=</code>)')
           if [ -n "$LATEST_VER" ]; then
+            wget $MD_URL
             sed -i "s/^\(sdk_version: \)[0-9.]*/\1$LATEST_VER/" README.md
-            if [ -n "$(git status --porcelain)" ]; then
-              echo "Files are different, committing changes..."
-              git add .
-              git commit -m "Update SDK at $(date '+%Y-%m-%d %H:%M:%S')"
-              git push
-            else
-              cd ..
-              rm -rf ./hf_repo
-              last_commit_ts=$(git log -1 --format=%ct 2>/dev/null)
-              now_ts=$(date +%s)
-              diff_days=$(((now_ts - last_commit_ts) / 86400))
-              if [ $diff_days -gt 58 ]; then
-                git commit --allow-empty -m "chore: keep repo active [skip ci]"
-                git push origin HEAD:main
-              else
-                echo "Files are the same, no changes."
-              fi
-            fi
+            wget --header="Authorization: token $GIT_TOKEN" $BASE_URL/upload.py
+            pip install huggingface_hub
+            python ./upload.py --token $HF_TOKEN --repo ccmusic-database/bel_canto
           else
-            echo "Failed to obtain latest sdk version."
+            last_commit_ts=$(git log -1 --format=%ct 2>/dev/null)
+            now_ts=$(date +%s)
+            diff_days=$(((now_ts - last_commit_ts) / 86400))
+            if [ $diff_days -gt 58 ]; then
+              git commit --allow-empty -m "chore: keep repo active [skip ci]"
+              git push origin HEAD:main
+            else
+              echo "Files are the same, no changes."
+            fi
           fi
